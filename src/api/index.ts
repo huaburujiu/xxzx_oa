@@ -26,6 +26,22 @@ export const getMemberList = async (): Promise<Member[]> => {
 }
 
 //axios请求
+//获得memberList数据
+export const getMemberListLikeName = async (query: string): Promise<Member[]> => {
+  const params = { nameLike: query }
+  try {
+    const response = await api.get('member/like/name', { params })
+    if (!response.data || !(response.data instanceof Array)) {
+      throw new Error('Invalid response data or not an array')
+    }
+    return response.data as Member[] // 确保响应数据是 Member[] 类型
+  } catch (error) {
+    console.error('Failed to fetch memberList data:', error)
+    throw error
+  }
+}
+
+//axios请求
 //获得placeList数据
 export const getPlaceList = async (): Promise<Place[]> => {
   try {
@@ -33,7 +49,23 @@ export const getPlaceList = async (): Promise<Place[]> => {
     if (!response.data || !(response.data instanceof Array)) {
       throw new Error('Invalid response data or not an array')
     }
-    return response.data as Member[] // 确保响应数据是 Member[] 类型
+    return response.data as Place[] // 确保响应数据是 Member[] 类型
+  } catch (error) {
+    console.error('Failed to fetch placeList data:', error)
+    throw error
+  }
+}
+
+//axios请求
+//模糊查询placeList数据
+export const getPlaceListLikeName = async (query: string): Promise<Place[]> => {
+  const params = { nameLike: query }
+  try {
+    const response = await api.get('place/like/name', { params })
+    if (!response.data || !(response.data instanceof Array)) {
+      throw new Error('Invalid response data or not an array')
+    }
+    return response.data as Place[] // 确保响应数据是 Member[] 类型
   } catch (error) {
     console.error('Failed to fetch placeList data:', error)
     throw error

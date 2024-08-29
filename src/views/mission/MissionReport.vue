@@ -1,43 +1,46 @@
 <script setup lang="ts">
-import { reactive, ref, onMounted } from 'vue'
-import { api, getMemberList, getPlaceList } from '../../api'
+import { reactive, ref } from 'vue'
+import { api, getMemberListLikeName, getPlaceListLikeName } from '../../api'
 import { ElMessage } from 'element-plus'
-import type { ComponentSize, FormInstance, FormRules } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 
-import type { Member, Place } from '../../entity/index'
+import type { ListItem, FormType, Member, Place } from '../../entity/index'
 
-// 数据格式接口
-interface Option {
-  key: number
-  label: string
-  initial: string
+const memberOption = ref<ListItem[]>([])
+const placeOption = ref<ListItem[]>([])
+const memberLoading = ref(false)
+const placeLoading = ref(false)
+const placeRemoteMethod = async (query: string) => {
+  placeLoading.value = true
+  if (query !== '' && query.length < 8) {
+    const placerList: Place[] = await getPlaceListLikeName(query)
+    placeLoading.value = false
+    const place: ListItem[] = placerList.map((item): ListItem => {
+      return { value: item.id, label: item.name }
+    })
+    placeOption.value = place.filter((item) => {
+      return item.label.includes(query)
+    })
+  } else {
+    placeOption.value = []
+  }
 }
 
-interface FormType {
-  member: number[]
-  place: number[]
-  content: string
-  vehicle: string
-  s_date: string
-  e_date: string
+const memberRemoteMethod = async (query: string) => {
+  memberLoading.value = true
+  if (query !== '' && query.length < 8) {
+    const memberList: Member[] = await getMemberListLikeName(query)
+    memberLoading.value = false
+    const member: ListItem[] = memberList.map((item): ListItem => {
+      return { value: item.id, label: item.name }
+    })
+    memberOption.value = member.filter((item) => {
+      return item.label.includes(query)
+    })
+  } else {
+    memberOption.value = []
+  }
 }
-
-const memberKeys = ref([]) // Member穿梭框右边栏数据,v-mode绑定
-let memberList: Member[] // 中间元素
-let memberData = ref<Option[]>() // Member穿梭框数据
-
-const placeKeys = ref([]) // Place穿梭框右边栏数据,v-mode绑定
-let placeList: Place[] // 中间元素
-let placeData = ref<Option[]>() // Place穿梭框数据
-const getData = async () => {
-  memberList = await getMemberList()
-  memberData.value = generateMember()
-  placeList = await getPlaceList()
-  placeData.value = generatePlace()
-}
-onMounted(() => {
-  getData()
-})
 
 const ruleFormRef = ref<FormInstance>()
 // 数据格式
@@ -97,66 +100,10 @@ const rules = reactive<FormRules<FormType>>({
   ]
 })
 
-//提取姓氏
-function extractSurnamesWithDoubleSurnames(names: string[]): string[] {
-  // 复姓列表
-  const doubleSurnames = ['欧阳', '司马']
-  const surnames: string[] = []
-  names.forEach((name) => {
-    const firstTwoChars = name.substring(0, 2)
-    if (doubleSurnames.includes(firstTwoChars)) {
-      surnames.push(firstTwoChars)
-    } else {
-      surnames.push(name.charAt(0))
-    }
-  })
-
-  return surnames
-}
-//生成人员函数
-const generateMember = () => {
-  const data: Option[] = []
-  const list = memberList.map((memberList) => memberList.name)
-  const initials = extractSurnamesWithDoubleSurnames(list)
-  memberList.forEach((member) => {
-    data.push({
-      label: member.name,
-      key: member.id,
-      initial: initials[member.id]
-    })
-  })
-  return data
-}
-//生成地点函数
-const generatePlace = () => {
-  const data: Option[] = []
-  const initials = placeList.map((placeList) => placeList.name)
-  placeList.forEach((palce) => {
-    data.push({
-      label: palce.name,
-      key: palce.id,
-      initial: initials[palce.id]
-    })
-  })
-  return data
-}
-
-//处理Member穿梭框变化函数
-const handleMemberChange = () => {
-  form.member = memberKeys.value
-}
-//处理Place穿梭框变化函数
-const handlePlaceChange = () => {
-  form.place = placeKeys.value
-}
-// 搜索函数
-const filterMethod = (query: string, item: { initial: string }) => {
-  return item.initial.includes(query)
-}
 // 提交按钮函数
 const onSubmit = async (formEl: FormInstance | undefined) => {
   if (!formEl) return
-  await formEl.validate((valid, fields) => {
+  await formEl.validate((valid: boolean) => {
     if (valid) {
       const data = JSON.parse(JSON.stringify(form))
       api
@@ -170,13 +117,13 @@ const onSubmit = async (formEl: FormInstance | undefined) => {
         })
         .catch((error) => {
           ElMessage({
-            message: '汇报失败:' + error,
+            message: '汇报失败' + error,
             type: 'error'
           })
         })
     } else {
       ElMessage({
-        message: '汇报失败:' + fields,
+        message: '汇报失败',
         type: 'error'
       })
     }
@@ -186,10 +133,6 @@ const onSubmit = async (formEl: FormInstance | undefined) => {
 // 重置按钮函数
 const clearForm = (formEl: FormInstance | undefined) => {
   if (!formEl) return
-  form.member = []
-  memberKeys.value = []
-  form.place = []
-  placeKeys.value = []
   formEl.resetFields()
 }
 
@@ -205,35 +148,16 @@ let form: FormType = reactive({
 </script>
 
 <template>
-  <el-form
-    :model="form"
-    :rules="rules"
-    ref="ruleFormRef"
-    label-width="auto"
-    style="max-width: 800px"
-  >
+  <el-form :model="form" :rules="rules" ref="ruleFormRef" label-width="auto" style="max-width: 800px">
     <el-form-item label="派遣人员" prop="member">
-      <el-transfer
-        v-model="memberKeys"
-        filterable
-        filter-placeholder="请输入搜索姓氏"
-        :filter-method="filterMethod"
-        :data="memberData"
-        :titles="['未选择', '已选择']"
-        @change="handleMemberChange"
-      />
+      <el-select-v2 v-model="form.member" style="width: 240px" multiple filterable remote
+        :remote-method="memberRemoteMethod" :options="memberOption" :loading="memberLoading" placeholder="请输入并选择人员" />
     </el-form-item>
     <el-form-item label="派遣地点" prop="place">
-      <el-transfer
-        v-model="placeKeys"
-        filterable
-        filter-placeholder="请输入搜索全称"
-        :filter-method="filterMethod"
-        :data="placeData"
-        :titles="['未选择', '已选择']"
-        @change="handlePlaceChange"
-      />
+      <el-select-v2 v-model="form.place" style="width: 240px" multiple filterable remote
+        :remote-method="placeRemoteMethod" :options="placeOption" :loading="placeLoading" placeholder="请输入并选择地点" />
     </el-form-item>
+
     <el-form-item label="派遣任务" prop="content">
       <el-input v-model="form.content" style="width: 100%" :rows="4" type="textarea" />
     </el-form-item>
@@ -247,23 +171,13 @@ let form: FormType = reactive({
     </el-form-item>
     <el-form-item label="开始时间" prop="s_date">
       <el-col :span="11">
-        <el-date-picker
-          type="datetime"
-          v-model="form.s_date"
-          placeholder="起始时间"
-          style="width: 100%"
-        />
+        <el-date-picker type="datetime" v-model="form.s_date" placeholder="起始时间" style="width: 100%" />
       </el-col>
       <el-col :span="2" class="text-center"></el-col>
     </el-form-item>
     <el-form-item label="结束时间" prop="e_date">
       <el-col :span="11">
-        <el-date-picker
-          type="datetime"
-          v-model="form.e_date"
-          placeholder="终止时间"
-          style="width: 100%"
-        />
+        <el-date-picker type="datetime" v-model="form.e_date" placeholder="终止时间" style="width: 100%" />
       </el-col>
     </el-form-item>
     <el-form-item>
@@ -275,9 +189,12 @@ let form: FormType = reactive({
 
 <style>
 .el-transfer-panel__body {
-  height: 150px; /* 设置穿梭框体的大小 */
+  height: 150px;
+  /* 设置穿梭框体的大小 */
 }
+
 .el-transfer-panel__list {
-  max-height: 100%; /* 设置列表的最大高度，可以根据需要调整 */
+  max-height: 100%;
+  /* 设置列表的最大高度，可以根据需要调整 */
 }
 </style>

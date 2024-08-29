@@ -28,3 +28,18 @@ export interface TableData {
   s_date: string
   e_date: string
 }
+
+export interface FormType {
+  member: number[]
+  place: number[]
+  content: string
+  vehicle: string
+  s_date: string
+  e_date: string
+}
+
+
+export interface ListItem {
+  value: number
+  label: string
+}
