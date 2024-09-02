@@ -41,10 +41,8 @@ const memberRemoteMethod = async (query: string) => {
     memberOption.value = []
   }
 }
-
+// 表单验证
 const ruleFormRef = ref<FormInstance>()
-// 数据格式
-
 // 起始时间验证函数
 const checkEndTime = (rule: any, value: any, callback: any) => {
   if (form.e_date <= form.s_date) {
@@ -148,14 +146,38 @@ let form: FormType = reactive({
 </script>
 
 <template>
-  <el-form :model="form" :rules="rules" ref="ruleFormRef" label-width="auto" style="max-width: 800px">
+  <el-form
+    :model="form"
+    :rules="rules"
+    ref="ruleFormRef"
+    label-width="auto"
+    style="max-width: 800px"
+  >
     <el-form-item label="派遣人员" prop="member">
-      <el-select-v2 v-model="form.member" style="width: 240px" multiple filterable remote
-        :remote-method="memberRemoteMethod" :options="memberOption" :loading="memberLoading" placeholder="请输入并选择人员" />
+      <el-select-v2
+        v-model="form.member"
+        style="width: 240px"
+        multiple
+        filterable
+        remote
+        :remote-method="memberRemoteMethod"
+        :options="memberOption"
+        :loading="memberLoading"
+        placeholder="请输入并选择人员"
+      />
     </el-form-item>
     <el-form-item label="派遣地点" prop="place">
-      <el-select-v2 v-model="form.place" style="width: 240px" multiple filterable remote
-        :remote-method="placeRemoteMethod" :options="placeOption" :loading="placeLoading" placeholder="请输入并选择地点" />
+      <el-select-v2
+        v-model="form.place"
+        style="width: 240px"
+        multiple
+        filterable
+        remote
+        :remote-method="placeRemoteMethod"
+        :options="placeOption"
+        :loading="placeLoading"
+        placeholder="请输入并选择地点"
+      />
     </el-form-item>
 
     <el-form-item label="派遣任务" prop="content">
@@ -171,13 +193,23 @@ let form: FormType = reactive({
     </el-form-item>
     <el-form-item label="开始时间" prop="s_date">
       <el-col :span="11">
-        <el-date-picker type="datetime" v-model="form.s_date" placeholder="起始时间" style="width: 100%" />
+        <el-date-picker
+          type="datetime"
+          v-model="form.s_date"
+          placeholder="起始时间"
+          style="width: 100%"
+        />
       </el-col>
       <el-col :span="2" class="text-center"></el-col>
     </el-form-item>
     <el-form-item label="结束时间" prop="e_date">
       <el-col :span="11">
-        <el-date-picker type="datetime" v-model="form.e_date" placeholder="终止时间" style="width: 100%" />
+        <el-date-picker
+          type="datetime"
+          v-model="form.e_date"
+          placeholder="终止时间"
+          style="width: 100%"
+        />
       </el-col>
     </el-form-item>
     <el-form-item>

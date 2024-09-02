@@ -1,12 +1,18 @@
 <script setup lang="ts">
 import { reactive, ref, onMounted } from 'vue'
-import { api, getMemberList, getPlaceList } from '../../api'
+import {
+  api,
+  getMemberList,
+  getMemberListLikeName,
+  getPlaceListByIds,
+  getPlaceListLikeName
+} from '../../api'
 import { ElMessage } from 'element-plus'
-import type { ComponentSize, FormInstance, FormRules } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
 
 import { DateTimeMapper } from '../../mapper/index'
-import type { ResponseData, Member, Place } from '../../entity/index'
+import type { ResponseData, Member, Place, ListItem } from '../../entity/index'
 // 数据格式接口
 interface Option {
   key: number
@@ -28,16 +34,12 @@ const router = useRouter()
 const route = useRoute()
 // 接收router数据
 const id = route.params.id
-const formSize = ref<ComponentSize>('default')
 const ruleFormRef = ref<FormInstance>()
 
 const memberKeys = ref<number[]>([]) // Member穿梭框右边栏数据,v-mode绑定
 let memberList: Member[] = [] // 中间元素
-let memberData = ref<Option[]>() // Member穿梭框数据
-
-const placeKeys = ref<number[]>([]) // Place穿梭框右边栏数据,v-mode绑定
-let placeList: Place[] // 中间元素
-let placeData = ref<Option[]>() // Place穿梭框数据
+const memberData = ref<Option[]>() // Member穿梭框数据
+let placeList = ref<string[]>()
 
 // Mapper
 const dateTimeMapper = new DateTimeMapper()
@@ -45,21 +47,16 @@ const dateTimeMapper = new DateTimeMapper()
 const getData = async () => {
   memberList = await getMemberList()
   memberData.value = generateMember()
-
-  placeList = await getPlaceList()
-  placeData.value = generatePlace()
-
   const resDate: ResponseData = await api.get('mission/show/' + id).then((res) => {
     return res.data
   })
-  placeKeys.value = resDate.place
   memberKeys.value = resDate.member
   form.member = resDate.member
-  form.place = resDate.place
   form.content = resDate.content
   form.vehicle = resDate.vehicle
   form.s_date = dateTimeMapper.formatDateString(resDate.s_date)
   form.e_date = dateTimeMapper.formatDateString(resDate.e_date)
+  placeList.value = await getPlaceListByIds(resDate.place)
 }
 // 生命周期：挂载
 onMounted(() => {
@@ -151,27 +148,46 @@ const generateMember = () => {
   })
   return data
 }
-//生成地点函数
-const generatePlace = () => {
-  const data: Option[] = []
-  const initials = placeList.map((placeList) => placeList.name)
-  placeList.forEach((place) => {
-    data.push({
-      label: place.name,
-      key: place.id,
-      initial: initials[place.id]
-    })
-  })
-  return data
-}
 
 //处理Member穿梭框变化函数
 const handleMemberChange = () => {
-  form.place = placeKeys.value
+  form.place = memberKeys.value
 }
-//处理Place穿梭框变化函数
-const handlePlaceChange = () => {
-  form.member = memberKeys.value
+
+const memberOption = ref<ListItem[]>([])
+const placeOption = ref<ListItem[]>([])
+const memberLoading = ref(false)
+const placeLoading = ref(false)
+const placeRemoteMethod = async (query: string) => {
+  placeLoading.value = true
+  if (query !== '' && query.length < 8) {
+    const placerList: Place[] = await getPlaceListLikeName(query)
+    placeLoading.value = false
+    const place: ListItem[] = placerList.map((item): ListItem => {
+      return { value: item.id, label: item.name }
+    })
+    placeOption.value = place.filter((item) => {
+      return item.label.includes(query)
+    })
+  } else {
+    placeOption.value = []
+  }
+}
+
+const memberRemoteMethod = async (query: string) => {
+  memberLoading.value = true
+  if (query !== '' && query.length < 8) {
+    const memberList: Member[] = await getMemberListLikeName(query)
+    memberLoading.value = false
+    const member: ListItem[] = memberList.map((item): ListItem => {
+      return { value: item.id, label: item.name }
+    })
+    memberOption.value = member.filter((item) => {
+      return item.label.includes(query)
+    })
+  } else {
+    memberOption.value = []
+  }
 }
 // 搜索函数
 const filterMethod = (query: string, item: { initial: string }) => {
@@ -212,8 +228,6 @@ const clearForm = (formEl: FormInstance | undefined) => {
   if (!formEl) return
   form.member = []
   memberKeys.value = []
-  form.place = []
-  placeKeys.value = []
   formEl.resetFields()
 }
 
@@ -247,15 +261,23 @@ let form: FormType = reactive({
         @change="handleMemberChange"
       />
     </el-form-item>
+    <el-row>
+      <el-col :span="3"><span>保存的地点：</span></el-col
+      ><el-col :span="5" v-for="item in placeList" :key="item"
+        ><span>{{ item }}</span></el-col
+      >
+    </el-row>
     <el-form-item label="派遣地点" prop="place">
-      <el-transfer
-        v-model="placeKeys"
+      <el-select-v2
+        v-model="form.place"
+        style="width: 240px"
+        multiple
         filterable
-        filter-placeholder="请输入搜索全称"
-        :filter-method="filterMethod"
-        :data="placeData"
-        :titles="['未选择', '已选择']"
-        @change="handlePlaceChange"
+        remote
+        :remote-method="placeRemoteMethod"
+        :options="placeOption"
+        :loading="placeLoading"
+        placeholder="请输入并选择地点"
       />
     </el-form-item>
     <el-form-item label="派遣任务" prop="content">
