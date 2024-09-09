@@ -44,7 +44,6 @@ const getData = async () => {
   const res = await getMissionById(mission.value.id)
   mission.value.member = await getMemberByIds(res.member)
   mission.value.place = await getPlaceListByIds(res.place)
-  console.log(mission.value.place)
   mission.value.content = res.content
   mission.value.vehicle = res.vehicle
   mission.value.e_date = res.e_date

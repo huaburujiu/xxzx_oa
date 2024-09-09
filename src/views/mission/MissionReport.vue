@@ -104,6 +104,7 @@ const onSubmit = async (formEl: FormInstance | undefined) => {
   await formEl.validate((valid: boolean) => {
     if (valid) {
       const data = JSON.parse(JSON.stringify(form))
+      console.log(data)
       api
         .post('/mission/save', data)
         .then(() => {
@@ -151,7 +152,7 @@ let form: FormType = reactive({
     :rules="rules"
     ref="ruleFormRef"
     label-width="auto"
-    style="max-width: 800px"
+    style="max-width: 800px;height: 34rem;"
   >
     <el-form-item label="派遣人员" prop="member">
       <el-select-v2

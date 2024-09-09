@@ -12,21 +12,12 @@ import type { FormInstance, FormRules } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
 
 import { DateTimeMapper } from '../../mapper/index'
-import type { ResponseData, Member, Place, ListItem } from '../../entity/index'
+import type { ResponseData, Member, Place, ListItem,FormType } from '../../entity/index'
 // 数据格式接口
 interface Option {
   key: number
   label: string
   initial: string
-}
-
-interface FormType {
-  member: number[]
-  place: number[]
-  content: string
-  vehicle: string
-  s_date: string
-  e_date: string
 }
 
 // router组件
@@ -54,8 +45,8 @@ const getData = async () => {
   form.member = resDate.member
   form.content = resDate.content
   form.vehicle = resDate.vehicle
-  form.s_date = dateTimeMapper.formatDateString(resDate.s_date)
-  form.e_date = dateTimeMapper.formatDateString(resDate.e_date)
+  form.s_date = resDate.s_date
+  form.e_date = resDate.e_date
   placeList.value = await getPlaceListByIds(resDate.place)
 }
 // 生命周期：挂载
@@ -199,6 +190,7 @@ const onSubmit = async (formEl: FormInstance | undefined) => {
   await formEl.validate((valid, fields) => {
     if (valid) {
       const data = JSON.parse(JSON.stringify(form))
+      console.log(data)
       api
         .put('mission/edit/' + id, data)
         .then(() => {

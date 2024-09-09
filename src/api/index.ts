@@ -1,4 +1,5 @@
 import type { Member, Place, ResponseData } from '@/entity'
+import type { MaintenanceResponseData } from '@/entity/maintenance'
 import axios from 'axios'
 
 const baseURL = 'http://localhost:8080/'
@@ -114,3 +115,19 @@ export const getMissionById = async (id: number): Promise<ResponseData> => {
     throw error
   }
 }
+
+export const getGgwFaultsMaintenanceById = async (id: number): Promise<MaintenanceResponseData> => {
+  try {
+    const response = await api.get('ggwFaultsMaintenance/show/' + id)
+    if (!response.data || !response.data) {
+      throw new Error('Invalid response data or not an array')
+    }
+    return response.data as MaintenanceResponseData // 确保响应数据是 Member[] 类型
+  } catch (error) {
+    console.error('Failed to fetch placeList data:', error)
+    throw error
+  }
+}
+
+
+

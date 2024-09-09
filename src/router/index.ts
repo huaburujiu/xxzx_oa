@@ -9,13 +9,15 @@ const router = createRouter({
       name: 'home',
       component: HomeView,
       meta: {
-        title: '信息中心综合系统'
+        title: '信息中心综合系统',
+        requiresAuth: true
       }
     },
     {
       path: '/trip/new',
       name: 'tripNew',
-      component: () => import('../views/trip/TripNewView.vue')
+      component: () => import('../views/trip/TripNewView.vue'),
+      meta: { requiresAuth: true }
     },
     {
       path: '/trip/ongo',
@@ -46,6 +48,26 @@ const router = createRouter({
       path: '/mission/edit/:id',
       name: 'missionEdit',
       component: () => import('../views/mission/MissionEdit.vue')
+    },
+    {
+      path: '/maintenance/report',
+      name: 'maintenanceReport',
+      component: () => import('../views/maintenance/maintenanceReport.vue')
+    },
+    {
+      path: '/maintenance/edit/:id',
+      name: 'maintenanceEdit',
+      component: () => import('../views/maintenance/maintenanceEdit.vue')
+    },
+    {
+      path: '/maintenance/show/:id',
+      name: 'maintenanceShow',
+      component: () => import('../views/maintenance/maintenanceShow.vue')
+    },
+    {
+      path: '/maintenance/sum',
+      name: 'maintenanceSum',
+      component: () => import('../views/maintenance/maintenanceSum.vue')
     }
   ]
 })

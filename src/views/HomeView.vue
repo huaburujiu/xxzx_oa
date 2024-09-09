@@ -1,5 +1,10 @@
 <script setup lang="ts"></script>
 
 <template>
-  <h1></h1>
+    <div class="home"></div>
 </template>
+<style scoped>
+.home {
+    height: 34rem;
+}
+</style>

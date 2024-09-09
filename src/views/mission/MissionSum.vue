@@ -173,7 +173,7 @@ const handleDelete = (index: number, row: TableData) => {
 </script>
 
 <template>
-  <el-table :data="filterTableData" ref="tableRef" style="width: 100%" height="1000">
+  <el-table :data="filterTableData" ref="tableRef" style="width: 100%">
     <el-table-column fixed prop="member" label="出差人" width="200" />
     <el-table-column prop="place" label="地点" width="200" />
     <el-table-column
